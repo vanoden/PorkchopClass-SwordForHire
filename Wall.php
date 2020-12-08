@@ -1,7 +1,7 @@
 <?php
 	namespace TileGame;
 
-	class Location {
+	class Wall {
 		public $x = 0;
 		public $y = 0;
 		public $z = 0;
