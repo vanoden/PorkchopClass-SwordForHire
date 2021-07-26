@@ -17,9 +17,12 @@
 				# Tiles (Wall/Floor Faces)
 				$create_table_query = "
 					CREATE TABLE IF NOT EXISTS `game_tiles` (
-						id NOT NULL AUTOINCREMENT PRIMARY KEY,
-						image
-					";
+						id			INT(11) NOT NULL AUTOINCREMENT PRIMARY KEY,
+						type		VARCHAR(255) NOT NULL,
+						facing 		enum('up','down','north','south','east','west') NOT NULL',
+						fill		VARCHAR(255) NOT NULL
+					)
+				";
 				if (! $this->executeSQL($create_table_query)) {
 					$this->error = "SQL Error creating game_tiles table in ".$this->module."::Schema::upgrade(): ".$this->error;
 					app_log($this->error, 'error');
@@ -29,18 +32,25 @@
 				# Map Grid
 				$create_table_query = "
 					CREATE TABLE IF NOT EXISTS `game_cells` (
+						id			INT(11) NOT NULL AUTOINCREMENT PRIMARY KEY,
 						x			INT(11) NOT NULL,
 						y			INT(11) NOT NULL,
 						z			INT(11) NOT NULL,
-						tile_up		VARCHAR(100),
-						tile_down	VARCHAR(100),
-						tile_north	VARCHAR(100),
-						tile_south	VARCHAR(100),
-						tile_east	VARCHAR(100),
-						tile_west	VARCHAR(100),
+						id_up		INT(11) NOT NULL,
+						id_down		INT(11) NOT NULL,
+						id_north	INT(11) NOT NULL,
+						id_south	INT(11) NOT NULL,
+						id_east		INT(11) NOT NULL,
+						id_west		INT(11) NOT NULL,
 						note		TEXT,
 						data		TEXT,
 						PRIMARY KEY `pk_grid` (`z`,`x`,`y`),
+						FOREIGN KEY `fk_id_up` (`id_up`) REFERENCES `game_tiles` (`id`),
+						FOREIGN KEY `fk_id_down` (`id_down`) REFERENCES `game_tiles` (`id`),
+						FOREIGN KEY `fk_id_north` (`id_north`) REFERENCES `game_tiles` (`id`),
+						FOREIGN KEY `fk_id_south` (`id_south`) REFERENCES `game_tiles` (`id`),
+						FOREIGN KEY `fk_id_east` (`id_east`) REFERENCES `game_tiles` (`id`),
+						FOREIGN KEY `fk_id_west` (`id_west`) REFERENCES `game_tiles` (`id`),
 					)
 				";
 				if (! $this->executeSQL($create_table_query)) {
@@ -49,15 +59,65 @@
 					return false;
 				}
 
-				# Character Classes
+				# Parties of characters or monsters, stashes or specials
 				$create_table_query = "
-					CREATE TABLE IF NOT EXISTS `game_character_classes` (
-						id			INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-						name		varchar(255) NOT NULL,
+					CREATE TABLE IF NOT EXISTS `game_collections` (
+						id			INT(11) NOT NULL AUTOINCREMENT PRIMARY KEY,
+						x			INT(11) NOT NULL,
+						y			INT(11) NOT NULL,
+						z			INT(11) NOT NULL,
+						facing		enum('north','south','east','west','up','down') NOT NULL DEFAULT 'west',
+						type		enum('party','stash','special') NOT NULL DEFAULT 'stash',
+						INDEX pos(`z,`x`,`y`)
 					)
 				";
 				if (! $this->executeSQL($create_table_query)) {
-					$this->error = "SQL Error creating geography_provinces table in ".$this->module."::Schema::upgrade(): ".$this->error;
+					$this->error = "SQL Error creating game_cells table in ".$this->module."::Schema::upgrade(): ".$this->error;
+					app_log($this->error, 'error');
+					return false;
+				}
+
+				# Things
+				$create_table_query = "
+					CREATE TABLE IF NOT EXISTS `game_things` (
+						id			INT(11) NOT NULL AUTOINCREMENT PRIMARY KEY,
+						collection_id	INT(11) NOT NULL,
+						type		VARCHAR(32) NOT NULL,
+						class		VARCHAR(32) NOT NULL,
+						FOREIGN KEY `fk_stash_id` (`collection_id`) REFERENCES `game_collections` (`id`)
+					)
+				";
+				if (! $this->executeSQL($create_table_query)) {
+					$this->error = "SQL Error creating game_cells table in ".$this->module."::Schema::upgrade(): ".$this->error;
+					app_log($this->error, 'error');
+					return false;
+				}
+
+				# Thing Attributes
+				$create_table_query = "
+					CREATE TABLE IF NOT EXISTS `game_thing_attributes` (
+						thing_id	INT(11) NOT NULL,
+						`key`		VARCHAR(64),
+						value		VARCHAR(255),
+						PRIMARY KEY `pk_being_att` (`being_id`,`key`,`value`),
+					)
+				";
+				if (! $this->executeSQL($create_table_query)) {
+					$this->error = "SQL Error creating thing_attributes table in ".$this->module."::Schema::upgrade(): ".$this->error;
+					app_log($this->error, 'error');
+					return false;
+				}
+
+				# Thing Inventory
+				$create_table_query = "
+					CREATE TABLE IF NOT EXISTS `game_thing_inventory` (
+						parent_id	INT(11) NOT NULL,
+						child_id	INT(11) NOT NULL,
+						UNIQUE KEY `uk_thing_inventory` (`parent_id`,`child_id`)
+					)
+				";
+				if (! $this->executeSQL($create_table_query)) {
+					$this->error = "SQL Error creating thing_inventory table in ".$this->module."::Schema::upgrade(): ".$this->error;
 					app_log($this->error, 'error');
 					return false;
 				}

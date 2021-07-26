@@ -1,17 +1,24 @@
 <?php
 	namespace TileGame;
 
-	class Party Extends Thing {
-		private type = 'enemy';
-		private _x = 0;
-		private _y = 0;
-		private _z = 0;
-		private _direction = 'N';
-
+	class Party {
 		public function members {
+			# Get Beings with matching collection id from database
 			$members = array();
 
+			$get_members_query = "
+				SELECT	id
+				FROM	game_collections
+				WHERE	id = ?
+			";
+
 			return $members;
+		}
+
+		public function direction {
+			# What direction is the party facing
+			$direction = 'north';
+			return $direction;
 		}
 
 		public function speed {

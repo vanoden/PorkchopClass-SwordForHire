@@ -1,13 +1,10 @@
 <?php
 	namespace TileGame;
 
-	class Item {
+	class Item Extends Thing {
 		public $id;
 		public $class;			# Weapon, Armor, Tool
 		public $weight;
-		public $x;
-		public $y;
-		public $z;
 		public $durability;
 		public $wear;
 		public $title;
